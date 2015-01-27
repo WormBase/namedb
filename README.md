@@ -1,0 +1,2 @@
+# namedb
+The namedb server.
