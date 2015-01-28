@@ -59,9 +59,9 @@
   (POST "/new-gene" {params :params} (friend/authorize #{:user.role/edit} (gene/new-gene params)))
 
   (GET "/kill-gene" []
-       (friend/authorize #{:user.role/edit} (gene/kill-gene {})))
+       (friend/authorize #{:user.role/edit} (common/kill-object "Gene" {})))
   (POST "/kill-gene" {params :params}
-        (friend/authorize #{:user.role/edit} (gene/kill-gene params)))
+        (friend/authorize #{:user.role/edit} (common/kill-object "Gene" params)))
 
   (GET "/merge-gene" []
        (friend/authorize #{:user.role/edit} (gene/merge-gene {})))
@@ -93,11 +93,39 @@
   (POST "/dump-genes" {params :params}
         (friend/authorize #{:user.role/view} (gene/dump params)))
 
+
+
+  
   (GET "/query-variation" {params :params}
        (friend/authorize #{:user.role/view} (vari/query params)))
 
   (GET "/variation-last-id" []
-       (friend/authorize #{:user.role/view} (common/last-id "Variation"))))
+       (friend/authorize #{:user.role/view} (common/last-id "Variation")))
+
+  (GET "/variation-change-name" []
+       (friend/authorize #{:user.role/edit} (vari/change-name {})))
+  (POST "/variation-change-name" {params :params}
+        (friend/authorize #{:user.role/edit} (vari/change-name params)))
+
+  (GET "/variation-request-id" []
+       (friend/authorize #{:user.role/edit} (vari/new {})))
+  (POST "/variation-request-id" {params :params}
+        (friend/authorize #{:user.role/edit} (vari/new params)))
+
+  (GET "/variation-kill" []
+       (friend/authorize #{:user.role/edit} (common/kill-object "Variation" {})))
+  (POST "/variation-kill" {params :params}
+        (friend/authorize #{:user.role/edit} (common/kill-object "Variation" params)))
+
+  (GET "/variation-merge" []
+       (friend/authorize #{:user.role/edit} (vari/merge {})))
+  (POST "/variation-merge" {params :params}
+        (friend/authorize #{:user.role/edit} (vari/merge params)))
+
+  (GET "/dump-variations" []
+       (friend/authorize #{:user.role/edit} "Dump"))
+  (POST "/dump-variations" {params :params}
+        (friend/authorize #{:user.role/edit} "Dump")))
   
 
 (defroutes api-routes

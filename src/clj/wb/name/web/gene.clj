@@ -177,62 +177,6 @@
          [:input {:type "submit"}]]]))))
 
 
-;;
-;; Kill gene
-;;
-
-(defn do-kill-gene [id]
-  (let
-      [db    (db con)
-       cid   (ffirst (lookup-gene db id))
-       errs  (->> [(if-not cid
-                     (str id " does not exist"))]
-                  (filter identity)
-                  (seq))]
-    (if errs
-      {:err errs}
-      (let [txn [[:wb/ensure-max-t [:object/name cid] (d/basis-t db)]
-                 [:db/add [:object/name cid] :object/live false]
-                 (txn-meta)]]
-        (try
-          (let [txr @(d/transact con txn)]
-            {:done true
-             :canonical cid})
-          (catch Exception e {:err [(.getMessage (.getCause e))]}))))))
-        
-(defn kill-gene [{:keys [id reason]}]
-  (page
-   (let [result (if id
-                  (do-kill-gene id))]
-     (if (:done result)
-       [:div.block
-        [:h3 "Kill gene"]
-        [:p (nlink (:canonical result)) " has been killed."]]
-       [:div.block
-        [:form {:method "POST"}
-         (anti-forgery-field)
-         [:h3 "Kill gene"]
-         (for [err (:err result)]
-           [:p.err err])
-         [:table.info
-          [:tr
-           [:th "Enter ID to kill"]
-           [:td
-            [:input {:type "text"
-                     :name "id"
-                     :class "autocomplete"
-                     :size 20
-                     :maxlength 20
-                     :value (or id "")}]]]
-          [:tr
-           [:th "Reason for removal"]
-           [:td
-            [:input {:type "text"
-                     :name "reason"
-                     :size 40
-                     :maxlength 200
-                     :value (or reason "")}]]]]
-         [:input {:type "submit"}]]]))))
 
 ;;
 ;; Add gene name
