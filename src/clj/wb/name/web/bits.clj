@@ -80,7 +80,7 @@
        [:p [:a {:href "/feature-kill"} "Kill feature"]])
 
      (if (authorized? #{:user.role/edit} id)
-       [:p [:a {:href "/feature-merge"} "Merge feature"]])
+       [:p [:a {:href "/feature-merge"} "Merge features"]])
      
      ]
 
@@ -97,6 +97,7 @@
    [:body
     [:div.header
      [:img.banner {:src "img/logo_wormbase_gradient_small.png"}]
+     [:h1 "Name Server"]
      [:div.ident (:wbperson (friend/current-authentication))]]
     [:div.container
      (vec (cons :div.content content))

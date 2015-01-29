@@ -113,10 +113,6 @@
                      :value (or reason "")}]]]]
          [:input {:type "submit"}]]]))))
 
-(defn merge-objects [domain params]
-  (page "Merge " domain "s"))
-
-
 (defn query [domain {lookup-str :lookup include-tx :include-tx}]
   (page
    [:div.block
@@ -179,3 +175,67 @@
                       (link domain related))]])]]))
          (list
           domain ":" lookup-str " does not exist in database.")))])))
+
+
+(defn do-merge-objects [domain id idx]
+  (let [db   (db con)
+        cid  (first (lookup domain db id))
+        cidx (first (lookup domain db idx))
+        obj  (entity db [:object/name cid])
+        objx (entity db [:object/name cidx])
+        errs (->> [(if-not cid
+                     (str "No match for " id))
+                   (if-not cidx
+                     (str "No match for " idx))
+                   (if (= (:object/live obj) false)
+                     (str "Cannot merge because " cid " is not live."))
+                   (if (and cid (= cid cidx))
+                     (str "Cannot merge " (if (= id cid)
+                                            cid
+                                            (str id " (" cid ")"))
+                          " into itself"))]
+                  (filter identity)
+                  (seq))]
+    (if errs
+      {:err errs}
+      (let [txn [[:wb/ensure-max-t [:object/name cid]  (d/basis-t db)]
+                 [:wb/ensure-max-t [:object/name cidx] (d/basis-t db)]
+                 [:wb/merge [:object/name cid] [:object/name cidx]]]]
+        (try
+          (let [txr @(d/transact con txn)]
+            {:done true})
+          (catch Exception e {:err [(.getMessage (.getCause e))]}))))))
+
+(defn merge-objects [domain {:keys [id idx]}]
+  (page
+   (let [result (if (and id idx)
+                  (do-merge-objects domain id idx))]
+     (if (:done result)
+       [:div.block
+        "Merged " (lc domain) "s"]
+       [:div.block
+        [:form {:method "POST"}
+         [:h3 "Merge " (lc domain) "s"]
+         (for [err (:err result)]
+           [:p.err err])
+         (anti-forgery-field)
+         [:table.info
+          [:tr
+           [:th domain " to stay alive:"]
+           [:td
+            [:input {:type "text"
+                     :name "id"
+                     :class "autocomplete"
+                     :size 20
+                     :maxlength 40
+                     :value (or id "")}]]]
+          [:tr
+           [:th domain " to remove:"]
+           [:td
+            [:input {:type "text"
+                     :name "idx"
+                     :class "autocomplete"
+                     :size 20
+                     :maxlength 40
+                     :value (or idx "")}]]]]
+         [:input {:type "submit"}]]]))))

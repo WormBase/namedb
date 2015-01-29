@@ -119,9 +119,9 @@
         (friend/authorize #{:user.role/edit} (common/kill-object "Variation" params)))
 
   (GET "/variation-merge" []
-       (friend/authorize #{:user.role/edit} (vari/merge {})))
+       (friend/authorize #{:user.role/edit} (common/merge-objects "Variation" {})))
   (POST "/variation-merge" {params :params}
-        (friend/authorize #{:user.role/edit} (vari/merge params)))
+        (friend/authorize #{:user.role/edit} (common/merge-objects "Variation" params)))
 
   (GET "/dump-variations" []
        (friend/authorize #{:user.role/edit} "Dump"))

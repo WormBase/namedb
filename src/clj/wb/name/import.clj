@@ -78,10 +78,9 @@
   (when-let [tx (seq (mapcat (partial import-log imp) logs))]
     @(d/transact (:con imp) (conj tx {:db/id #db/id[:db.part/tx]
                                       :db/txInstant (:log_when (first logs))
-                                      :nametxn/user (:log_who (first logs))}))
-    (Thread/sleep 2)))
+                                      :nametxn/user (:log_who (first logs))}))))
 
-(def is-create? #{"created" "splitFrom"})
+(def is-create? #{"created" "splitFrom" "import"})
 
 (defn import-tx [imp logs]
   ;; Moved "created" out to a separate transaction so we can use lookup-refs in add.
@@ -126,3 +125,24 @@
              :log_name_type (parse-int log-name-type)
              :log_name_value (if (not= "NULL" log-name-value) log-name-value)
              :domain_id (if domain (parse-int domain))})))))
+
+(defn update-before-create [event-stream]
+  (count
+   (reduce
+    (fn [seen {:keys [object_id log_what log_when]}]
+      (if (is-create? log_what)
+        (conj seen object_id)
+        (do
+          (if (not (seen object_id))
+            (println "Unexpected " log_what " on " object_id " at " log_when))
+          seen)))
+    #{}
+    (mapcat
+     (fn [loggroup]
+       (concat
+        (filter #(is-create? (:log_what %)) loggroup)
+        (filter #(not (is-create? (:log_what %))) loggroup)))
+     (partition-by :log_when event-stream)))))
+          
+                 
+  

@@ -11,6 +11,11 @@ div.header {
     padding: 8px;
 }
 
+div.header h1 {
+    margin: 0px;
+    color: #ccdddd;
+}
+
 div.ident {
     color: white;
 }
