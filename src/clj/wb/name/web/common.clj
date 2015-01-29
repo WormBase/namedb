@@ -56,7 +56,9 @@
           " id allocated was: "
           (format temp last-id)]])))
 
-             
+
+(defn query [domain id]
+  (page "Query " domain ":" id))
 
 (defn do-kill-object [domain id]
   (let
@@ -110,3 +112,6 @@
                      :maxlength 200
                      :value (or reason "")}]]]]
          [:input {:type "submit"}]]]))))
+
+(defn merge-objects [domain params]
+  (page "Merge " domain "s"))

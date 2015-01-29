@@ -26,6 +26,7 @@
             [wb.name.web.common :as common]
             [wb.name.web.gene :as gene]
             [wb.name.web.variation :as vari]
+            [wb.name.web.feature :as feature]
             [wb.name.web.bits :refer [txn-meta]]
             [wb.name.ssl :as ssl]))
 
@@ -125,7 +126,29 @@
   (GET "/dump-variations" []
        (friend/authorize #{:user.role/edit} "Dump"))
   (POST "/dump-variations" {params :params}
-        (friend/authorize #{:user.role/edit} "Dump")))
+        (friend/authorize #{:user.role/edit} "Dump"))
+
+
+  
+  (GET "/query-feature" {params :params}
+       (friend/authorize #{:user.role/view} (common/query "Feature" params)))
+
+  (GET "/feature-new" []
+       (friend/authorize #{:user.role/edit} (feature/new {})))
+  (POST "/feature-new" {params :params}
+        (friend/authorize #{:user.role/edit} (feature/new params)))
+
+  (GET "/feature-kill" []
+       (friend/authorize #{:user.role/edit} (common/kill-object "Feature" {})))
+  (POST "/feature-kill" {params :params}
+        (friend/authorize #{:user.role/edit} (common/kill-object "Feature" params)))
+
+  (GET "/feature-merge" []
+       (friend/authorize #{:user.role/edit} (common/merge-objects "Feature" {})))
+  (POST "/feature-merge" {params :params}
+        (friend/authorize #{:user.role/edit} (common/merge-objects "Feature" params)))
+
+  )
   
 
 (defroutes api-routes

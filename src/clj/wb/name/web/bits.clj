@@ -72,6 +72,15 @@
 
      (if (authorized? #{:user.role/view} id)
        [:p [:a {:href "/query-feature"} "Find feature"]])
+
+     (if (authorized? #{:user.role/edit} id)
+       [:p [:a {:href "/feature-new"} "New feature"]])
+
+     (if (authorized? #{:user.role/edit} id)
+       [:p [:a {:href "/feature-kill"} "Kill feature"]])
+
+     (if (authorized? #{:user.role/edit} id)
+       [:p [:a {:href "/feature-merge"} "Merge feature"]])
      
      ]
 
