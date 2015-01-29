@@ -19,11 +19,14 @@ Options:
 
 END
 
-my ($domain, $id, $cert);
+my ($domain, $id, $cert, $ns);
 GetOptions('domain:s'     => \$domain,
            'id:s'         => \$id,
-           'cert:s'       => \$cert)
+           'cert:s'       => \$cert,
+           'nameserver:s' => \$ns)
     or die "Bad opts...";
+
+$ns = $ns || "https://db.wormbase.org:8131";
 
 my $client = HTTP::Tiny->new(
     max_redirect => 0, 
@@ -52,7 +55,7 @@ my $query = <<END;
     :params ["$id"]}
 END
 
-my $result = edn_post('https://db.wormbase.org:8131/api/query', $query);
+my $result = edn_post("$ns/api/query", $query);
 my $count = scalar @{$result};
 
 die "Could not find identifier $id." unless $count > 0;
@@ -63,12 +66,10 @@ my ($cid, $live) = @{$result->[0]};
 die "$id is Still Alive.\n" if $live;
 
 my $txn = edn::write(
-    {transaction => [[edn::read(':db/add'), 
-                      [edn::read(':object/name'), $cid], 
-                      edn::read(':object/live'), 
-                      edn::read('true')]]
+    {transaction => [[edn::read(':wb/resurrect'), 
+                      [edn::read(':object/name'), $cid]]]
     });
-my $txr = edn_post('https://db.wormbase.org:8131/api/transact', $txn);
+my $txr = edn_post("$ns/api/transact", $txn);
 if ($txr->{'success'}) {
     print "$cid resurrected.\n"
 } else {

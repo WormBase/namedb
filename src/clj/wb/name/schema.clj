@@ -278,6 +278,18 @@
 
                             [:db.fn/cas domain-id :domain/last-id last-id (inc last-id)]
                             [:db/add id :object/split new-id]])}}
+
+   {:db/id #db/id[:db.part/user]
+    :db/ident :wb/kill
+    :db/fn #db/fn {:lang "clojure"
+                   :params [db id]
+                   :code [[:db/add id :object/live false]]}}
+
+   {:db/id #db/id[:db.part/user]
+    :db/ident :wb/resurrect
+    :db/fn #db/fn {:lang "clojure"
+                   :params [db id]
+                   :code [[:db/add id :object/live true]]}}
                    
    
   {:db/id #db/id[:db.part/tx]

@@ -47,11 +47,23 @@
   (pr-str (apply q query (db con) params)))
 
 (defn api-transact [{:keys [transaction]}]
-  (try
-    @(d/transact con (conj transaction (txn-meta)))
-    (pr-str {:success true})
-    (catch Exception e (pr-str {:success false :error (.getMessage e)}))))
-
+  (let [errs (->> (for [tx-cmd transaction]
+                    (cond
+                     (not (vector? tx-cmd))
+                     (str "Only vector transation elements are supported by the name server: " tx-cmd)
+                     
+                     (not= (namespace (first tx-cmd)) "wb")
+                     (str "Name server transactions must invoke functions in the :wb namespace:" tx-cmd)))
+                  (filter identity)
+                  (seq))]
+    (if errs
+      (pr-str {:success false
+               :error (first errs)})
+      (try
+        @(d/transact con (conj transaction (txn-meta)))
+        (pr-str {:success true})
+        (catch Exception e (pr-str {:success false :error (.getMessage e)}))))))
+    
 
 (defroutes app-routes
   (GET "/query-gene" {params :params} (common/query "Gene" params))
