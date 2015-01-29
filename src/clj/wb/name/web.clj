@@ -6,7 +6,8 @@
         ring.middleware.anti-forgery
         ring.middleware.cookies
         ring.util.anti-forgery
-        wb.edn)
+        wb.edn
+        wb.name.utils)
   (:require [datomic.api :as d :refer (q db history touch entity)]
             [clojure.string :as str]
             [ring.adapter.jetty :refer (run-jetty)]
@@ -46,7 +47,13 @@
 (defn api-query [{:keys [query params]}]
   (pr-str (apply q query (db con) params)))
 
-(defn api-transact [{:keys [transaction]}]
+(defn- query-tempid-names [{db :db-after tempids :tempids}]
+  (q '[:find ?name
+       :in $ [?obj ...]
+       :where [?obj :object/name ?name]]
+     db (for [[t i] tempids] i)))
+
+(defn api-transact [{:keys [transaction tempid-report]}]
   (let [errs (->> (for [tx-cmd transaction]
                     (cond
                      (not (vector? tx-cmd))
@@ -60,8 +67,12 @@
       (pr-str {:success false
                :error (first errs)})
       (try
-        @(d/transact con (conj transaction (txn-meta)))
-        (pr-str {:success true})
+        (let [txr @(d/transact con (conj transaction (txn-meta)))]
+          (pr-str
+           (vmap
+            :success true
+            :tempid-report (if tempid-report
+                             (query-tempid-names txr)))))
         (catch Exception e (pr-str {:success false :error (.getMessage e)}))))))
     
 

@@ -9,12 +9,11 @@ use Data::Dumper;
 
 my $USAGE = <<END;
 Usage: $0 <options>
-  Resurrect the indicated ID.
+  Create a new ID from the specified domain.
 
 Options:
 
   --domain       Domain of identifier to resurrect (e.g. "Gene")
-  --id           Identifier to resurrect.
   --cert         Path to certificate file.
   --nameserver   Base URI of the name server to contact.
 
@@ -22,10 +21,9 @@ END
 
 my ($domain, $id, $cert, $ns);
 GetOptions('domain:s'     => \$domain,
-           'id:s'         => \$id,
            'cert:s'       => \$cert,
            'nameserver:s' => \$ns)
-    or die "Bad opts...";
+    or die $USAGE;
 
 $ns = $ns || "https://db.wormbase.org:8131";
 
@@ -48,31 +46,17 @@ sub edn_post {
     return edn::read($resp->{'content'});
 }
 
-my $query = <<END;
-  {:query [:find ?id ?live
-           :in \$ ?id
-           :where [?obj :object/name ?id]
-                  [?obj :object/live ?live]]
-    :params ["$id"]}
-END
-
-my $result = edn_post("$ns/api/query", $query);
-my $count = scalar @{$result};
-
-die "Could not find identifier $id." unless $count > 0;
-die "Ambiguous identifier $id." unless $count == 1;
-
-my ($cid, $live) = @{$result->[0]};
-
-die "$id is Still Alive.\n" if $live;
-
+my $tempid = edn::read('#db/id [:db.part/user -1000500]');
 my $txn = edn::write(
-    {transaction => [[edn::read(':wb/resurrect'), 
-                      [edn::read(':object/name'), $cid]]]
+    {'transaction' => [[edn::read(':wb/new-obj'),
+                      $domain,
+                      [$tempid]]],
+     'tempid-report' => edn::read('true')
     });
 my $txr = edn_post("$ns/api/transact", $txn);
+
 if ($txr->{'success'}) {
-    print "$cid resurrected.\n"
+    print "Created $txr->{'tempid-report'}->[0]->[0].\n";
 } else {
-    print "Resurrection failed: $txr->{'error'}\n";
+    print "$txr->{'error'}\n";
 }
