@@ -54,7 +54,7 @@
 
 
 (defroutes app-routes
-  (GET "/query-gene" {params :params} (gene/get-query-gene params))
+  (GET "/query-gene" {params :params} (common/query "Gene" params))
 
   (GET "/new-gene" [] (friend/authorize #{:user.role/edit} (gene/new-gene {})))
   (POST "/new-gene" {params :params} (friend/authorize #{:user.role/edit} (gene/new-gene params)))
@@ -98,7 +98,7 @@
 
   
   (GET "/query-variation" {params :params}
-       (friend/authorize #{:user.role/view} (vari/query params)))
+       (friend/authorize #{:user.role/view} (common/query "Variation" params)))
 
   (GET "/variation-last-id" []
        (friend/authorize #{:user.role/view} (common/last-id "Variation")))

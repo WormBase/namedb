@@ -6,9 +6,38 @@
             [cemerick.friend :as friend :refer [authorized?]]
             [wb.name.history :as hist]
             [wb.name.connection :refer [con]]
+            [wb.name.web.common :refer [link]]
             [ring.util.anti-forgery :refer [anti-forgery-field]]
             [ring.util.io :refer [piped-input-stream]])
   (:import [java.io PrintWriter OutputStreamWriter]))
 
-(defn new [params]
-  (page "new feature"))
+(defn do-new []
+  (let [temp (d/tempid :db.part/user)
+        txn  [[:wb/new-obj "Feature" [temp]]
+              (txn-meta)]]
+    (try
+      (let [txr @(d/transact con txn)
+            db  (:db-after txr)
+            ent (touch (entity db (d/resolve-tempid db (:tempids txr) temp)))]
+        {:done (:object/name ent)})
+      (catch Exception e {:err [(.getMessage e)]}))))
+        
+
+(defn new [{:keys [confirm]}]
+  (let [result (if confirm
+                 (do-new))]
+    (page 
+     (if (:done result)
+       [:div.block
+        [:h3 "New feature"]
+        [:p "Feature ID " (link "Feature" (:done result)) " has been generated."]]
+       [:div.block
+        [:h3 "New feature"]
+        (for [err (:err result)]
+          [:p.err err])
+        [:form {:method "POST"}
+         (anti-forgery-field)
+         [:input {:type "hidden"
+                  :name "confirm"
+                  :value "yes"}]
+         [:input {:type "submit"}]]]))))

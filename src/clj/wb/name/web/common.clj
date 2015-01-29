@@ -115,3 +115,67 @@
 
 (defn merge-objects [domain params]
   (page "Merge " domain "s"))
+
+
+(defn query [domain {lookup-str :lookup include-tx :include-tx}]
+  (page
+   [:div.block
+    [:form {:method "GET"}
+     [:h3 "Find " (lc domain)]
+
+     [:table.info
+      [:tr
+       [:th domain " to retrieve"]
+       [:td [:input {:type "text"
+                     :name "lookup"
+                     :class "autocomplete"
+                     :size 20
+                     :maxlength 20
+                     :value (or lookup-str "")}]]]]
+     [:input {:type "submit" :value "Search"}]]]
+   (if lookup-str
+    [:div.block
+     (let [db (db con)
+           ids (lookup domain db lookup-str)]
+       (if (seq ids)
+        (let [gene (entity db [:object/name (first ids)])]
+         (list
+          [:table.info
+           [:tr
+            [:th domain]
+            [:td (:object/name gene)]]
+           [:tr
+            [:th "LIVE?"]
+            [:td (if (:object/live gene) "Live" "Dead")]]
+           (for [sec (->> (:object/secondary gene)
+                          (sort-by (comp :db/id :object.secondary/name-type)))]
+             [:tr
+              [:th (:name-type/name (:object.secondary/name-type sec))]
+              [:td (:object.secondary/name sec)]])]
+             
+          
+          [:table.history
+           [:tr
+            (if include-tx
+              [:th "TX"])
+            [:th "What"]
+            [:th "Who"]
+            [:th "When"]
+            [:th "Type"]
+            [:th "Name"]
+            [:th "Related"]]
+           [:tbody
+            (for [{:keys [tx what who when type name related]}
+                  (hist/gene-history (d/history db) (first ids))]
+              [:tr
+               (if include-tx
+                 [:td tx])
+               [:td what]
+               [:td who]
+               [:td when]
+               [:td type]
+               [:td name]
+               [:td (if related
+                      (link domain related))]])]]))
+         (list
+          domain ":" lookup-str " does not exist in database.")))])))
