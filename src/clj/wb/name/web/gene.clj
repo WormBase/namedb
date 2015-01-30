@@ -231,13 +231,7 @@
          [:table.info
           [:tr
            [:th "ID:"]
-           [:td [:input {:type "text"
-                         :name "id"
-                         :class "autocomplete"
-                         :placeholder "WBGene...."
-                         :size 20
-                         :maxlength 40
-                         :value (or id "")}]]]
+           [:td (ac-field "id" "Gene" id)]]
           [:tr
            [:th "Type:"]
            [:td
@@ -329,13 +323,7 @@
         [:table.info
          [:tr 
           [:th "ID:"]
-          [:td [:input {:type "text"
-                        :name "id"
-                        :class "autocomplete"
-                        :placeholder "WBGene...."
-                        :size 20
-                        :maxlength 40
-                        :value ""}]]]]
+          [:td (ac-field "id" "Gene" id)]]]
         [:input {:type "submit"}]]]))))
 
 ;;
@@ -405,24 +393,10 @@
          [:table.info
           [:tr
            [:th "Gene to stay alive:"]
-           [:td
-            [:input {:type "text"
-                     :name "id"
-                     :class "autocomplete"
-                     :placeholder "WBGene...."
-                     :size 20
-                     :maxlength 40
-                     :value (or id "")}]]]
+           [:td (ac-field "id" "Gene" idx)]]
           [:tr
            [:th "Gene to remove:"]
-           [:td
-            [:input {:type "text"
-                     :name "idx"
-                     :class "autocomplete"
-                     :placeholder "WBGene...."
-                     :size 20
-                     :maxlength 40
-                     :value (or idx "")}]]]]
+           [:td (ac-field "idx" "Gene" idx)]]]
          [:input {:type "submit"}]]]))))
 
 ;;
@@ -475,14 +449,7 @@
          [:table.info
           [:tr
            [:th "Gene to split:"]
-           [:td
-            [:input {:type "text"
-                     :name "id"
-                     :class "autocomplete"
-                     :placeholder "WBGene...."
-                     :size 20
-                     :maxlength 40
-                     :value (or id "")}]]]
+           [:td (ac-field "id" "Gene" id)]]
           [:tr
            [:th "Sequence name of new gene:"]
            [:td
@@ -531,14 +498,7 @@
          [:table.info
           [:tr
            [:th "Gene name"]
-           [:td
-            [:input {:type "text"
-                         :name "cds"
-                         :class "autocomplete"
-                         :placeholder "WBGene...."
-                         :size 20
-                         :maxlength 40
-                     :value (or cds "")}]]]
+           [:td (ac-field "cds" "Gene" cds)]]
           [:tr
            [:th "Change to..."]
            [:td

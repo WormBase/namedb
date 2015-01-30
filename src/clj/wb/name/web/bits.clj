@@ -103,6 +103,28 @@
      (vec (cons :div.content content))
      [:div.menu (menu)]]]))
 
+(def name-placeholders
+  {"Gene"       "WBGene... or name"
+   "Variation"  "WBVar... or name"
+   "Feature"    "WBsf..."})
+
+(defn ac-field
+  "Return hiccup data corresponding to a namedb autocomplete field for
+   names of domain `domain`."
+  ([name domain]
+     (ac-field domain ""))
+  ([name domain value]
+     [:input {:type "text"
+              :name name
+              :class "autocomplete"
+              :data-domain domain
+              :size 20
+              :maxlength 20
+              :autocomplete "off"
+              :value (or value "")
+              :placeholder (name-placeholders domain)}]))
+  
+
 (defn txn-meta
   "Return a transaction metadata entity for the current request"
   []

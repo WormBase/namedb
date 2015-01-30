@@ -66,13 +66,7 @@
          [:table.info
           [:tr
            [:th "ID to change"]
-           [:td [:input {:type "text"
-                         :name "id"
-                         :class "autocomplete"
-                         :placeholder "WBVar...."
-                         :size 20
-                         :maxlength 40
-                         :value (or id "")}]]]
+           [:td (ac-field "id" "Variation" id)]]
           [:tr
            [:th "Public name of variation"]
            [:td [:input {:type "text"

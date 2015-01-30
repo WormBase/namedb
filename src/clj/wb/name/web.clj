@@ -31,18 +31,39 @@
             [wb.name.web.bits :refer [txn-meta]]
             [wb.name.ssl :as ssl]))
 
-(defn api-lookup [{:keys [prefix]}]
-  (let [db (db con)]
+(defn- lookup-primary [db domain-id prefix]
+  (->> (d/seek-datoms db :avet :object/name prefix)
+       (take-while #(= (q '[:find ?dom .
+                            :in $ ?obj
+                            :where [?obj :object/domain ?dom]]
+                          db (:e %))
+                       domain-id))
+       (take-while #(.startsWith (:v %) prefix))
+       (map :v)))
+
+(defn- lookup-secondary [db domain-id prefix]
+  (let [dom-name-types (set
+                        (q '[:find [?nt ...]
+                             :in $ ?dom
+                             :where [?nt :name-type/domain ?dom]]
+                           db domain-id))]
+    (->> (d/seek-datoms db :avet :object.secondary/name prefix)
+         (take-while #(dom-name-types
+                       (q '[:find ?nt .
+                            :in $ ?obj
+                            :where [?obj :object.secondary/name-type ?nt]]
+                          db (:e %))))
+         (take-while #(.startsWith (:v %) prefix))
+         (map :v))))
+
+(defn api-lookup [{:keys [domain prefix]}]
+  (let [db (db con)
+        domain-id (:db/id (entity db [:domain/name domain]))]
    (json/generate-string
-    (concat
-     (->> (d/seek-datoms db :avet :object/name prefix)
-          (take 10)
-          (map #(nth % 2))
-          (filter #(.startsWith % prefix)))
-     (->> (d/seek-datoms db :avet :object.secondary/name prefix)
-          (take 10)
-          (map #(nth % 2))
-          (filter #(.startsWith % prefix)))))))
+    (take 10
+     (lazy-cat
+      (lookup-primary db domain-id prefix)
+      (lookup-secondary db domain-id prefix))))))
 
 (defn api-query [{:keys [query params]}]
   (pr-str (apply q query (db con) params)))
@@ -190,7 +211,7 @@
   (wrap-anti-forgery app-routes)
   (route/files "/" {:root "resources/public"}))
 
-(defn credential-fn [token]
+(defn- goog-credential-fn [token]
   (if-let [u (entity (db con) [:user/email (:id (:access-token token))])]
     {:identity token
      :email (:user/email u)
@@ -200,7 +221,7 @@
      :wbperson "unauthorized"
      :roles #{:user.role/none}}))
 
-(defn ssl-credential-fn [{:keys [ssl-client-cert]}]
+(defn- ssl-credential-fn [{:keys [ssl-client-cert]}]
   (if-let [u (entity (db con) [:user/x500-cn (->> (.getSubjectX500Principal ssl-client-cert)
                                                   (.getName)
                                                   (re-find #"CN=([^,]+)")
@@ -229,7 +250,7 @@
                               :grant_type "authorization_code"
                               :redirect_uri (format-config-uri client-config)}}})
 
-(defn flex-decode [s]
+(defn- flex-decode [s]
   (let [m (mod (count s) 4)
         s (if (> m 0)
             (str s (.substring "====" m))
@@ -237,7 +258,7 @@
     (base64/decode s)))
     
 
-(defn my-token-parse [resp]
+(defn- goog-token-parse [resp]
   (let [token     (parse-string (:body resp) true)
         id-token  (parse-string (flex-decode (second (str/split (:id_token token) #"\."))) true)]
     {:access_token (:access_token token)
@@ -252,8 +273,8 @@
                                         (oauth2/workflow
                                          {:client-config client-config
                                           :uri-config uri-config
-                                          :access-token-parsefn my-token-parse
-                                          :credential-fn credential-fn})]})
+                                          :access-token-parsefn goog-token-parse
+                                          :credential-fn goog-credential-fn})]})
       wrap-edn-params
       wrap-params
       wrap-stacktrace

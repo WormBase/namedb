@@ -16,14 +16,17 @@ function xhr(url, callback) {
 }
 
 function initAutocomplete(i) {
-    i.addEventListener('keydown', function(ev) {
-        xhr('/api/lookup?prefix=' + i.value, function(resp) {
-            if (resp && resp.indexOf(i.value) >= 0) {
-                i.style.background = '#aaeeaa';
-            } else {
-                i.style.background = 'white';
+    i.addEventListener('input', function(ev) {
+        xhr('/api/lookup?domain=' + i.dataset.domain +
+            '&prefix=' + i.value,
+            function(resp) {
+                if (resp && resp.indexOf(i.value) >= 0) {
+                    i.style.background = '#aaeeaa';
+                } else {
+                    i.style.background = 'white';
+                }
             }
-        });
+           );
     }, false);
 }
 

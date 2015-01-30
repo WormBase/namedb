@@ -96,13 +96,7 @@
          [:table.info
           [:tr
            [:th "Enter ID to kill"]
-           [:td
-            [:input {:type "text"
-                     :name "id"
-                     :class "autocomplete"
-                     :size 20
-                     :maxlength 20
-                     :value (or id "")}]]]
+           [:td (ac-field "id" domain id)]]
           [:tr
            [:th "Reason for removal"]
            [:td
@@ -122,12 +116,7 @@
      [:table.info
       [:tr
        [:th domain " to retrieve"]
-       [:td [:input {:type "text"
-                     :name "lookup"
-                     :class "autocomplete"
-                     :size 20
-                     :maxlength 20
-                     :value (or lookup-str "")}]]]]
+       [:td (ac-field "lookup" domain lookup-str)]]]
      [:input {:type "submit" :value "Search"}]]]
    (if lookup-str
     [:div.block
@@ -222,20 +211,8 @@
          [:table.info
           [:tr
            [:th domain " to stay alive:"]
-           [:td
-            [:input {:type "text"
-                     :name "id"
-                     :class "autocomplete"
-                     :size 20
-                     :maxlength 40
-                     :value (or id "")}]]]
+           [:td (ac-field "id" domain id)]]
           [:tr
            [:th domain " to remove:"]
-           [:td
-            [:input {:type "text"
-                     :name "idx"
-                     :class "autocomplete"
-                     :size 20
-                     :maxlength 40
-                     :value (or idx "")}]]]]
+           [:td (ac-field "idx" domain idx)]]]
          [:input {:type "submit"}]]]))))
