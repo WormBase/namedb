@@ -15,6 +15,7 @@
                  [base64-clj "0.1.1"]
                  [cheshire "5.4.0"]
                  [com.draines/postal "1.11.3"]
+                 [clj-time "0.9.0"]
 
                  ;; For importer only.  Should be dev dependencies
                  ;; or something?

@@ -7,7 +7,9 @@
             [wb.name.history :as hist]
             [wb.name.connection :refer [con]]
             [ring.util.anti-forgery :refer [anti-forgery-field]]
-            [ring.util.io :refer [piped-input-stream]])
+            [ring.util.io :refer [piped-input-stream]]
+            [clj-time.format :as time]
+            [clj-time.coerce :refer [from-date]])
   (:import [java.io PrintWriter OutputStreamWriter]))
 
 
@@ -107,6 +109,8 @@
                      :value (or reason "")}]]]]
          [:input {:type "submit"}]]]))))
 
+(def ^:private history-time-format (time/formatter "EEE, dd MMM yyyy HH:mm:ss"))
+
 (defn query [domain {lookup-str :lookup include-tx :include-tx}]
   (page
    [:div.block
@@ -157,7 +161,7 @@
                  [:td tx])
                [:td what]
                [:td who]
-               [:td when]
+               [:td (time/unparse history-time-format (from-date when))]
                [:td type]
                [:td name]
                [:td (if related
