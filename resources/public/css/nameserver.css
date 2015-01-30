@@ -24,6 +24,10 @@ table {
     font-size: 12px;
 }
 
+table.history tbody tr:nth-child(even) {
+    background-color: #bbc8dd;
+}
+
 div.block {
     background: #eeeeee;
     padding: 15px;
