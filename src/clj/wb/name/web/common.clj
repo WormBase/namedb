@@ -1,6 +1,7 @@
 (ns wb.name.web.common
   (:use hiccup.core
-        wb.name.web.bits)
+        wb.name.web.bits
+        wb.name.mail)
   (:require [datomic.api :as d :refer (q db history touch entity)]
             [clojure.string :as str]
             [cemerick.friend :as friend :refer [authorized?]]
@@ -62,7 +63,7 @@
 (defn query [domain id]
   (page "Query " domain ":" id))
 
-(defn do-kill-object [domain id]
+(defn do-kill-object [domain id reason]
   (let
       [db    (db con)
        cid   (first (lookup domain db id))
@@ -77,6 +78,9 @@
                  (txn-meta)]]
         (try
           (let [txr @(d/transact con txn)]
+            (ns-email (format "%s killed - %s" domain cid)
+                "ID"        cid
+                "Remark"    reason)
             {:done true
              :canonical cid})
           (catch Exception e {:err [(.getMessage (.getCause e))]}))))))
@@ -84,7 +88,7 @@
 (defn kill-object [domain {:keys [id reason]}]
   (page
    (let [result (if id
-                  (do-kill-object domain id))]
+                  (do-kill-object domain id reason))]
      (if (:done result)
        [:div.block
         [:h3 "Kill " (lc domain)]
@@ -196,6 +200,9 @@
                  [:wb/merge [:object/name cid] [:object/name cidx]]]]
         (try
           (let [txr @(d/transact con txn)]
+            (ns-email (format "Merged %ss %s (%s) - %s (%s)" (lc domain) id cid idx cidx)
+                "LIVE" (format "retained %s %s" (lc domain) cid)
+                "DEAD" (format "killed   %s %s" (lc domain) cidx))
             {:done true})
           (catch Exception e {:err [(.getMessage (.getCause e))]}))))))
 

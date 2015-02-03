@@ -1,5 +1,6 @@
 (ns wb.name.web.gene
   (:use hiccup.core
+        wb.name.mail
         wb.name.web.bits)
   (:require [datomic.api :as d :refer (q db history touch entity)]
             [clojure.string :as str]
@@ -29,7 +30,16 @@
     (if (and new-public
              (not= new-public old-public))
       [[:wb/change-name p "Gene" "Public_name" new-public]])))   ;; go back to using the tempid...
-    
+
+(def species-longnames
+  {"elegans"        "Caenorhabditis elegans"
+   "briggsae"       "Caenorhabditis briggsae"
+   "remanei"        "Caenorhabditis remanei"
+   "brenneri"       "Caenorhabditis brenneri"
+   "japonica"       "Caenorhabditis japonica"
+   "pristionchus"   "Pristionchus pacificus"
+   "brugia"         "Brugia malayi"
+   "ovolvulus"      "Onchocerca volvulus"})
                       
 (def name-checks
   {"elegans"    {"CGC"         #"^[a-z21]{3,4}-[1-9]\d*(\.\d+)?$"	
@@ -119,7 +129,18 @@
                                     tx
                                     (update-public-name (db con) tx tid)))
               db  (:db-after txr)
-              ent (touch (entity db (d/resolve-tempid db (:tempids txr) tid)))]
+              ent (touch (entity db (d/resolve-tempid db (:tempids txr) tid)))
+              who (:wbperson (friend/current-authentication))]
+          (ns-email (format "WBGeneID request %s" new-name)
+              "Gene"          (:object/name ent)
+              "CGC_name"      (format "%s Person_evidence" new-name)
+              "Public_name"   new-name
+              "Species"       (species-longnames species)
+              "History"       (format "Version_change 1 now %s" who)
+              "Created"       "Live"
+              "Remark"        remark
+              "Command line"  (format "newgene.pl -seq %s -who %s -load -id %s -species %s"
+                                      new-name who (:object/name ent) species))
           {:done (:object/name ent)})
         (catch Exception e {:err [(.getMessage e)]})))))
 
@@ -185,7 +206,15 @@
 (defn do-add-name [id type name species]
   (let
     [db   (db con)
-     cid  (ffirst (lookup-gene db id))   
+     cid  (ffirst (lookup-gene db id))
+     old-name (q '[:find ?n .
+                   :in $ ?cid ?type
+                   :where [?obj :object/name ?cid]
+                          [?obj :object/secondary ?sec]
+                          [?sec :object.secondary/name-type ?nt]
+                          [?nt :name-type/name ?type]
+                          [?sec :object.secondary/name ?n]]
+                 db cid type)
      errs (->> [(if-not cid
                   (str "Couldn't find " id))
                 (if (= type "CGC")
@@ -209,6 +238,14 @@
           (let [txr @(d/transact con (concat
                                       txn
                                       (update-public-name db txn [:object/name cid])))]
+            (ns-email 
+             (format "%s added to %s" type cid)
+             "Name added" 
+             (str name " " type)
+             "WARNING"
+             (if (and (= type "CGC")
+                      old-name)
+               (format "CGC name %s overwritten." old-name)))
             {:done true
              :canonical cid})
           (catch Exception e {:err [(.getMessage (.getCause e))]}))))))
@@ -267,6 +304,10 @@
                (txn-meta)]]
       (try
         @(d/transact con txn)
+        (ns-email 
+             (format "%s removed from %s" type id)
+             "Name removed" 
+             (str name " " type))
         {:done true}
         (catch Exception e {:err [(.getMessage (.getCause e))]})))))
   
@@ -374,6 +415,9 @@
                  [:wb/merge [:object/name cid] [:object/name cidx]]]]
         (try
           (let [txr @(d/transact con txn)]
+            (ns-email (format "Merged genes %s (%s) - %s (%s)" id cid idx cidx)
+                "LIVE" (format "retained gene %s" cid)
+                "DEAD" (format "killed   gene %s" cidx))
             {:done true})
           (catch Exception e {:err [(.getMessage (.getCause e))]}))))))
 
@@ -424,6 +468,17 @@
                                       (update-public-name db txn temp)))
                 db (:db-after txr)
                 ent (entity db (d/resolve-tempid db (:tempids txr) temp))]
+            (ns-email (format "Split gene %s" cid)
+                "ID"             cid
+                "New ID"         (:object/name ent)
+                "New CDS"        name
+                "Command_line"   (format "splitgene.pl -old %s -new %s -who %s -id %s -load -species %s"
+                                         cid
+                                         name
+                                         (:wbperson (friend/current-authentication))
+                                         (:object/name ent)
+                                         species)
+                "Remark"         reason)
             {:done      (:object/name ent)
              :canonical cid})
           (catch Exception e {:err [(.getMessage (.getCause e))]}))))))

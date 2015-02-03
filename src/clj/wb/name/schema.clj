@@ -45,7 +45,8 @@
      (fields
       [name :string :unique-identity]
       [email :string :unique-identity]
-      [role :enum [:view :edit :cgc :query :transact] :many]
+      [role :enum [:view :edit :cgc :receive-email
+                   :query :transact] :many]
       [wbperson :string]
       [x500-cn :string :unique-identity]
       [bcrypt-passwd :string :nohistory]))
