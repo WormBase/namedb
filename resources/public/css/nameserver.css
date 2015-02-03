@@ -95,3 +95,12 @@ table.history td {
 p.err {
     color: red
 }
+
+span.clear-button {
+    background: red;
+    margin-left: 3px;
+    padding-left: 3px;
+    padding-right: 3px;
+    height: 12px;
+    color: black;
+}

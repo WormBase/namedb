@@ -30,9 +30,35 @@ function initAutocomplete(i) {
     }, false);
 }
 
+function initClearButton(i) {
+    if (i.type !== 'text') {
+        return;
+    }
+
+    console.log(i);
+    var clear = document.createElement('span');
+    clear.textContent = 'x';
+    clear.className = 'clear-button';
+    var parent = i.parentNode;
+    var ns = i.nextSibling;
+    if (ns) {
+        parent.insertBefore(clear, ns);
+    } else {
+        parent.appendChild(clear);
+    }
+    clear.addEventListener('click', function(ev) {
+        i.value = '';
+    }, false);
+}
+
 document.addEventListener('DOMContentLoaded', function(ev) {
     var acs = document.querySelectorAll('input.autocomplete');
-    for (i = 0; i < acs.length; ++i) {
+    for (var i = 0; i < acs.length; ++i) {
         initAutocomplete(acs[i]);
+    }
+
+    var inputs = document.querySelectorAll('input');
+    for (var i = 0; i < inputs.length; ++i) {
+        initClearButton(inputs[i]);
     }
 }, false);
