@@ -74,6 +74,17 @@
                  "Sequence"    #"OVOC\d+$"
                  "Public_name" #"^Ovo-[a-z21]{3,4}-[1-9]\d*(\.\d+)?$|^OVOC\d+$"}})
 
+(defn species-menu
+  "Build hiccup for a species menu"
+  ([name] (species-menu nil))
+  ([name sel]
+     [:select {:name name}
+      (for [s (keys species-longnames)]
+        [:option {:value s
+                  :selected (if (= sel s)
+                              "yes")}
+         (species-longnames s)])]))
+
 (defn nlink [id]
   [:a {:href (str "/query-gene?lookup=" id)} id])
 
@@ -184,9 +195,7 @@
           [:tr
            [:th "Species"]
            [:td
-            [:select {:name "species"}
-             (for [s ["elegans" "briggsae" "remanei" "brenneri" "japonica" "pristionchus" "brugia"]]
-               [:option s])]]]
+            (species-menu "species" species)]]
           [:tr
            [:th "Additional comment (e.g. instructions to nomenclature person)"]
            [:td
@@ -286,9 +295,7 @@
           [:tr
            [:th "Species:"]
            [:td
-            [:select {:name "species"}
-             (for [s ["elegans" "briggsae" "remanei" "brenneri" "japonica" "pristionchus" "brugia"]]
-               [:option s])]]]]
+            (species-menu "species" species)]]]
         
          [:input {:type "submit"}]]]))))
 
@@ -516,9 +523,7 @@
           [:tr
            [:th "Species:"]
            [:td
-            [:select {:name "species"}
-             (for [s ["elegans" "briggsae" "remanei" "brenneri" "japonica" "pristionchus" "brugia"]]
-               [:option s])]]]
+            (species-menu "species" species)]]
           
           [:tr
            [:th "Reason:"]
@@ -564,9 +569,7 @@
           [:tr
            [:th "Species:"]
            [:td
-            [:select {:name "species"}
-             (for [s ["elegans" "briggsae" "remanei" "brenneri" "japonica" "pristionchus" "brugia"]]
-               [:option s])]]]]
+            (species-menu "species" species)]]]
 
          [:input {:type "submit"}]]]))))
          
