@@ -429,7 +429,8 @@
             (ns-email (format "Merged genes %s (%s) - %s (%s)" id cid idx cidx)
                 "LIVE" (format "retained gene %s" cid)
                 "DEAD" (format "killed   gene %s" cidx))
-            {:done true})
+            {:done true
+             :cid cid :cidx cidx})
           (catch Exception e {:err [(.getMessage (.getCause e))]}))))))
 
 (defn merge-gene [{:keys [id idx]}]
@@ -438,7 +439,8 @@
                   (do-merge-genes id idx))]
      (if (:done result)
        [:div.block
-        "Merged genes"]
+        [:h3 "Merged Gens"]
+        [:p "Gene " (nlink (:cidx result)) " is DEAD and has been merged into " (nlink (:cid result))]]
        [:div.block
         [:form {:method "POST"}
          [:h3 "Merge genes"]

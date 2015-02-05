@@ -203,7 +203,9 @@
             (ns-email (format "Merged %ss %s (%s) - %s (%s)" (lc domain) id cid idx cidx)
                 "LIVE" (format "retained %s %s" (lc domain) cid)
                 "DEAD" (format "killed   %s %s" (lc domain) cidx))
-            {:done true})
+            {:done true
+             :cid cid
+             :cidx cidx})
           (catch Exception e {:err [(.getMessage (.getCause e))]}))))))
 
 (defn merge-objects [domain {:keys [id idx]}]
@@ -212,7 +214,8 @@
                   (do-merge-objects domain id idx))]
      (if (:done result)
        [:div.block
-        "Merged " (lc domain) "s"]
+        [:h3 "Merged " (lc domain) "s"]
+        [:p domain " " (link domain (:cidx result)) " is DEAD and has been merged into " (link domain (:cid result))]]
        [:div.block
         [:form {:method "POST"}
          [:h3 "Merge " (lc domain) "s"]
