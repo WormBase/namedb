@@ -186,7 +186,8 @@
       {:err errs}
       (let [txn [[:wb/ensure-max-t [:object/name cid]  (d/basis-t db)]
                  [:wb/ensure-max-t [:object/name cidx] (d/basis-t db)]
-                 [:wb/merge [:object/name cid] [:object/name cidx]]]]
+                 [:wb/merge [:object/name cid] [:object/name cidx]]
+                 (txn-meta)]]
         (try
           (let [txr @(d/transact con txn)]
             (ns-email (format "Merged %ss %s (%s) - %s (%s)" (lc domain) id cid idx cidx)

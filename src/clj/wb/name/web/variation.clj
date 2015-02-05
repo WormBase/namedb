@@ -89,7 +89,8 @@
   ;; Name uniqueness gets checked by :wb/add-name
   (let [temp (d/tempid :db.part/user)
         txn  [[:wb/new-obj "Variation" [temp]]
-              [:wb/add-name temp "Variation" "Public_name" name]]]
+              [:wb/add-name temp "Variation" "Public_name" name]
+              (txn-meta)]]
     (try
       (let [txr @(d/transact con txn)
             db  (:db-after txr)
