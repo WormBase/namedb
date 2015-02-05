@@ -141,7 +141,10 @@
                                     (update-public-name (db con) tx tid)))
               db  (:db-after txr)
               ent (touch (entity db (d/resolve-tempid db (:tempids txr) tid)))
-              who (:wbperson (friend/current-authentication))]
+              who (:wbperson (friend/current-authentication))
+              gc  (if (= type "CGC")
+                    (or (second (re-matches #"(\w{3,4})(?:[(]|-\d+)" new-name))
+                        "-"))]
           (ns-email (format "WBGeneID request %s" new-name)
               "Gene"          (:object/name ent)
               "CGC_name"      (format "%s Person_evidence" new-name)
@@ -149,6 +152,7 @@
               "Species"       (species-longnames species)
               "History"       (format "Version_change 1 now %s" who)
               "Created"       "Live"
+              "Gene class"    gc
               "Remark"        remark
               "Command line"  (format "newgene.pl -seq %s -who %s -load -id %s -species %s"
                                       new-name who (:object/name ent) species))
@@ -540,15 +544,55 @@
 ;;
 ;;
 
+(def ^:private class-change-codes
+  {"Pseudogene"      "CP"
+   "coding"          "PC"
+   "Transposon_CDS"  "CT"
+   "Transcript"      "CR"})
+
 (defn do-change-class [cds class species]
-  {:err ["Not supported yet."]})
+  (let [db     (db con)
+        cid    (ffirst (lookup-gene db cds))
+        cp     (class-change-codes class)
+        who    (:wbperson (friend/current-authentication))]
+    (if cid
+      (if-let [seq-name (q '[:find ?sn .
+                             :in $ ?id
+                             :where [?obj :object/name ?id]
+                                    [?obj :object/secondary ?sec]
+                                    [?nt  :name-type/name "Sequence"]
+                                    [?sec :object.secondary/name-type ?nt]
+                                    [?sec :object.secondary/name ?sn]]
+                           db cid)]
+        (if (= class "Transposon_CDS")
+          (try
+            @(d/transact con [[:wb/ensure-max-t [:object/name cid] (d/basis-t db)]
+                              [:wb/kill [:object/name cid]]
+                              (txn-meta)])
+            (ns-email (format "Changing %s to %s" cid class)
+                "Command line" (format "changegene.pl -seq %s -species %s -who %s -load -class %s"
+                                       seq-name species who cp)
+                "Note" "Remember you need to add a 2-letter change code after -class"
+                "WARNING" (format "Killed %s in the nameserver" cid))
+            {:done true}
+            (catch Exception e {:err [(.getMessage e)]}))
+          (do
+            (ns-email
+             (format "Changing %s to %s" cid class)
+             "Command line" (format "changegene.pl -seq %s -species %s -who %s -load -class %s"
+                                    seq-name species who cp)
+             "Note" "Remember you need to add a 2-letter change code after -class"
+             "WARNING" "This does not affect nameserver db")
+            {:done true}))
+        {:err [(format "Couldn't get a Sequence name for %s" cds)]})
+      {:err [(format "Couldn't find %s" cds)]})))
 
 (defn change-gene-class [{:keys [cds class species]}]
   (let [result (if cds
                  (do-change-class cds class species))]
     (page
      (if (:done result)
-       [:div.block "Class changed... somehow!"]
+       [:div.block "Changed " [:strong cds] " to " [:strong class] "."]
        [:div.block
         [:form {:method "POST"}
          [:h3 "Change gene class"]
@@ -564,7 +608,7 @@
            [:td
             [:select {:name "class"}
              (for [s ["coding" "Pseudogene" "Transcript" "Transposon_CDS"]]
-               [:option s])]]]
+               [:option {:selected (if (= s class) "yes")} s])]]]
 
           [:tr
            [:th "Species:"]
