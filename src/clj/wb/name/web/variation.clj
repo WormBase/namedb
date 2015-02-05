@@ -1,7 +1,8 @@
 (ns wb.name.web.variation
   (:use hiccup.core
         wb.name.utils
-        wb.name.web.bits)
+        wb.name.web.bits
+        wb.name.mail)
   (:require [datomic.api :as d :refer (q db history touch entity)]
             [clojure.string :as str]
             [cemerick.friend :as friend :refer [authorized?]]
@@ -44,6 +45,10 @@
                  (txn-meta)]]
         (try
           @(d/transact con txn)
+          (ns-email
+           (format "WBVarID change name %s -> %s" cid name)
+           "WBVarID"   cid
+           "Name"      name)
           {:done true
            :canonical cid}
           (catch Exception e {:err [(.getMessage (.getCause e))]}))))))
@@ -89,6 +94,11 @@
       (let [txr @(d/transact con txn)
             db  (:db-after txr)
             ent (touch (entity db (d/resolve-tempid db (:tempids txr) temp)))]
+        (ns-email
+         (format "WBVarID request %s" name)
+         "WBVarID" (:object/name ent)
+         "Name"    name
+         "Remark"  remark)
         {:done true
          :id (:object/name ent)})
       (catch Exception e {:err [(.getMessage e)]}))))

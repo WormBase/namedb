@@ -1,6 +1,7 @@
 (ns wb.name.web.feature
   (:use hiccup.core
-        wb.name.web.bits)
+        wb.name.web.bits
+        wb.name.mail)
   (:require [datomic.api :as d :refer (q db history touch entity)]
             [clojure.string :as str]
             [cemerick.friend :as friend :refer [authorized?]]
@@ -19,6 +20,9 @@
       (let [txr @(d/transact con txn)
             db  (:db-after txr)
             ent (touch (entity db (d/resolve-tempid db (:tempids txr) temp)))]
+        (ns-email
+         (format "New feature - %s" (:object/name ent))
+         "ID"    (:object/name ent))
         {:done (:object/name ent)})
       (catch Exception e {:err [(.getMessage e)]}))))
         
