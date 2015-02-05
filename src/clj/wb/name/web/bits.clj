@@ -93,7 +93,9 @@
     [:script {:language "javascript"
               :src "/js/nameserver.js"}]
     [:link {:rel "stylesheet"
-            :href "/css/nameserver.css"}]]
+            :href "/css/nameserver.css"}]
+    [:link {:rel "stylesheet"
+            :href "//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css"}]]
    [:body
     [:div.header
      [:img.banner {:src "img/logo_wormbase_gradient_small.png"}]
@@ -130,3 +132,20 @@
   []
   {:db/id (d/tempid :db.part/tx)
    :nametxn/user (:wbperson (friend/current-authentication))})
+
+(defmulti link (fn [domain _] domain))
+
+(defmethod link "Gene" [_ id]
+  [:span id
+   [:a {:href (str "/query-gene?lookup=" id)}
+    [:i {:class "fa fa-external-link"}]]])
+
+(defmethod link "Variation" [_ id]
+  [:span id
+   [:a {:href (str "/query-variation?lookup=" id)}
+    [:i {:class "fa fa-external-link"}]]])
+
+(defmethod link "Feature" [_ id]
+  [:span id
+   [:a {:href (str "/query-feature?lookup=" id)}
+    [:i {:class "fa fa-external-link"}]]])

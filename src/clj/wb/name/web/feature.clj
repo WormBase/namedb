@@ -7,7 +7,6 @@
             [cemerick.friend :as friend :refer [authorized?]]
             [wb.name.history :as hist]
             [wb.name.connection :refer [con]]
-            [wb.name.web.common :refer [link]]
             [ring.util.anti-forgery :refer [anti-forgery-field]]
             [ring.util.io :refer [piped-input-stream]])
   (:import [java.io PrintWriter OutputStreamWriter]))

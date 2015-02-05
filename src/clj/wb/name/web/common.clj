@@ -30,17 +30,6 @@
      domain
      name))
 
-(defmulti link (fn [domain _] domain))
-
-(defmethod link "Gene" [_ id]
-  [:a {:href (str "/query-gene?lookup=" id)} id])
-
-(defmethod link "Variation" [_ id]
-  [:a {:href (str "/query-variation?lookup=" id)} id])
-
-(defmethod link "Feature" [_ id]
-  [:a {:href (str "/query-feature?lookup=" id)} id])
-
 (defn lc [^String s]
   (.toLowerCase s))
 

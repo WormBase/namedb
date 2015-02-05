@@ -86,7 +86,7 @@
          (species-longnames s)])]))
 
 (defn nlink [id]
-  [:a {:href (str "/query-gene?lookup=" id)} id])
+  (link "Gene" id))
 
 (defn lookup-gene
   "Look up an object using either a primary of a secondary identifier."

@@ -103,4 +103,5 @@ span.clear-button {
     padding-right: 3px;
     height: 12px;
     color: black;
+    cursor: default;
 }

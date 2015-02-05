@@ -13,7 +13,7 @@
   (:import [java.io PrintWriter OutputStreamWriter]))
 
 (defn vlink [id]
-  [:a {:href (str "/query-variation?lookup=" id)} id])
+  (link "Variation" id))
 
 (defn lookup-variation
   "Look up an object using either a primary of a secondary identifier."
