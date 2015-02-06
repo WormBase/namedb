@@ -168,9 +168,9 @@
         (friend/authorize #{:user.role/edit} (common/merge-objects "Variation" params)))
 
   (GET "/dump-variations" []
-       (friend/authorize #{:user.role/edit} "Dump"))
+       (friend/authorize #{:user.role/edit} (vari/dump {})))
   (POST "/dump-variations" {params :params}
-        (friend/authorize #{:user.role/edit} "Dump"))
+        (friend/authorize #{:user.role/edit} (vari/dump params)))
 
 
   

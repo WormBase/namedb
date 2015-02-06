@@ -136,3 +136,45 @@
                          :value (or remark "")}]]]]
          [:input {:type "submit"}]]]))))
           
+
+(defn dump [{:keys [confirm]}]
+  (let [db (db con)]
+    (if confirm
+      {:headers
+       {"Content-Type" "text/tab-separated-values"}
+       :body
+       (piped-input-stream
+        (fn [out]
+          (let [pw (PrintWriter. (OutputStreamWriter. out))]
+            (binding [*out* pw]
+              (doseq [[name pub live?]
+                      (q '[:find ?name ?pub ?live
+                           :where [?dom :domain/name "Variation"]
+                                  [?pnt :name-type/domain ?dom]
+                                  [?pnt :name-type/name "Public_name"]
+                                  [?obj :object/domain ?dom]
+                                  [?obj :object/name ?name]
+                                  [?obj :object/secondary ?sec]
+                                  [?sec :object.secondary/name-type ?pnt]
+                                  [?sec :object.secondary/name ?pub]
+                                  [?obj :object/live ?live]]
+                         db)]
+                (println
+                 (str/join
+                  "\t"
+                  [pub
+                   name
+                   (if live?
+                     "live"            
+                     "DEAD")]))))
+            (.flush pw))))}
+      (page 
+       [:div.block
+        [:form {:method "POST"}
+         [:h3 "Dump Variation IDs"]
+         (anti-forgery-field)
+         [:p "Are you sure you want to dump all IDs?  This can take a few seconds."]
+         [:input {:type "hidden"
+                  :name "confirm"
+                  :value "yes"}]
+         [:input {:type "submit"}]]]))))
