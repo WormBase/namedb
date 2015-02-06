@@ -185,9 +185,9 @@
            [:th "Name type"]
            [:td
             [:select {:name "type"}
-             [:option {:selected "yes"} "Sequence"]
              (if (authorized? #{:user.role/cgc} friend/*identity*)
-               [:option "CGC"])]]]
+               [:option {:selected (if (= type "CGC") "yes")} "CGC"])
+             [:option {:selected (if (= type "Sequence") "yes")} "Sequence"]]]]
           [:tr
            [:th "Name of gene"]
            [:td
@@ -286,9 +286,9 @@
            [:th "Type:"]
            [:td
             [:select {:name "type"}
-             [:option {:selected "yes"} "Sequence"]
-             [:option "CGC"]]]]
-
+             (if (authorized? #{:user.role/cgc} friend/*identity*)
+               [:option {:selected (if (= type "CGC") "yes")} "CGC"])
+             [:option {:selected (if (= type "Sequence") "yes")} "Sequence"]]]]
           [:tr
            [:th "Name to add:"]
            [:td [:input {:type "text"
