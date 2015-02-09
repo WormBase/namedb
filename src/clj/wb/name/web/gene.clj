@@ -438,6 +438,7 @@
                 "DEAD" (format "killed   gene %s" cidx)
                 "WARNING" (if warnings (str/join "; " warnings)))
             {:done true
+             :warnings warnings
              :cid cid :cidx cidx})
           (catch Exception e {:err [(.getMessage (.getCause e))]}))))))
 
@@ -447,8 +448,10 @@
                   (do-merge-genes id idx))]
      (if (:done result)
        [:div.block
-        [:h3 "Merged Gens"]
-        [:p "Gene " (nlink (:cidx result)) " is DEAD and has been merged into " (nlink (:cid result))]]
+        [:h3 "Merged Genes"]
+        [:p "Gene " (nlink (:cidx result)) " is DEAD and has been merged into " (nlink (:cid result))]
+        (for [w (:warnings result)]
+          [:p.err "WARNING: " w])]
        [:div.block
         [:form {:method "POST"}
          [:h3 "Merge genes"]
