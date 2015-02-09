@@ -295,3 +295,8 @@
                                     :client-auth :want}
                                    {:port 8130
                                     :join? false})))
+
+(defn -main
+  "Dummy entry point"
+  [& args]
+  (println "Name server running"))

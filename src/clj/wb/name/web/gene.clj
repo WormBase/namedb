@@ -1,6 +1,7 @@
 (ns wb.name.web.gene
   (:use hiccup.core
         wb.name.mail
+        wb.name.utils
         wb.name.web.bits)
   (:require [datomic.api :as d :refer (q db history touch entity)]
             [clojure.string :as str]
@@ -418,7 +419,12 @@
                          (str "Gene to be killed has a cgc name " cgcx "."
                               "please contact the Geneace curator."))))]
                    (filter identity)
-                   (seq))]
+                   (seq))
+        warnings (those
+                  (if-let [cgcx (cgc-name db cidx)]
+                    (format "Killed gene %s had CGC name %s." cidx cgcx))
+                  (if-not (:object/live objx)
+                    (format "Merged gene %s was dead." cidx)))]
     (if errs
       {:err errs}
       (let [txn [[:wb/ensure-max-t [:object/name cid]  (d/basis-t db)]
@@ -429,7 +435,8 @@
           (let [txr @(d/transact con txn)]
             (ns-email (format "Merged genes %s (%s) - %s (%s)" id cid idx cidx)
                 "LIVE" (format "retained gene %s" cid)
-                "DEAD" (format "killed   gene %s" cidx))
+                "DEAD" (format "killed   gene %s" cidx)
+                "WARNING" (if warnings (str/join "; " warnings)))
             {:done true
              :cid cid :cidx cidx})
           (catch Exception e {:err [(.getMessage (.getCause e))]}))))))

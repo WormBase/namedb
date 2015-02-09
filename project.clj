@@ -24,6 +24,8 @@
                  [mysql/mysql-connector-java "5.1.6"]]
   :source-paths ["src/clj"]
 
+  :main wb.name.web
+
   :profiles {:dev {:dependencies [[alembic "0.3.2"]]
                    :plugins [[lein-environ "0.5.0"]]}}
   
