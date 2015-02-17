@@ -1,4 +1,4 @@
-(defproject wormnames "0.0.2-SNAPSHOT"
+(defproject namedb "0.0.3-SNAPSHOT"
   :description "Next-gen Wormbase Nameserver"
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [com.datomic/datomic-free "0.9.5130"]
@@ -16,6 +16,7 @@
                  [cheshire "5.4.0"]
                  [com.draines/postal "1.11.3"]
                  [clj-time "0.9.0"]
+                 [org.clojure/tools.nrepl "0.2.7"]
 
                  ;; For importer only.  Should be dev dependencies
                  ;; or something?
@@ -27,6 +28,7 @@
   :main wb.name.web
 
   :profiles {:dev {:dependencies [[alembic "0.3.2"]]
-                   :plugins [[lein-environ "0.5.0"]]}}
+                   :plugins [[lein-environ "0.5.0"]]}
+             :uberjar {:aot :all}}
   
   :jvm-opts ["-Xmx4G" "-Ddatomic.txTimeoutMsec=5000"])

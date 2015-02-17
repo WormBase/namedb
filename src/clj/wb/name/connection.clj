@@ -3,4 +3,4 @@
             [environ.core           :refer [env]]))
 
 (def uri (env :wb-namedb-uri))
-(def con (d/connect uri))
+(def con (when-not *compile-files* (d/connect uri)))

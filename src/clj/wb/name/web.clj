@@ -1,4 +1,5 @@
 (ns wb.name.web
+  (:gen-class)
   (:use hiccup.core
         ring.middleware.stacktrace 
         ring.middleware.params 
@@ -29,7 +30,8 @@
             [wb.name.web.variation :as vari]
             [wb.name.web.feature :as feature]
             [wb.name.web.bits :refer [txn-meta]]
-            [wb.name.ssl :as ssl]))
+            [wb.name.ssl :as ssl]
+            [clojure.tools.nrepl.server :as nrepl]))
 
 (defn- lookup-primary [db domain-id prefix]
   (->> (d/seek-datoms db :avet :object/name prefix)
@@ -284,19 +286,24 @@
 (def keystore (env :wb-ssl-keystore ))
 (def keypass (env :wb-ssl-password))
 
-(defonce server (run-jetty #'app (if keystore
-                                   {:port 8130
-                                    :join? false
-                                    :ssl-port 8131
-                                    :keystore keystore
-                                    :key-password keypass
-                                    :truststore keystore
-                                    :trust-password keypass
-                                    :client-auth :want}
-                                   {:port 8130
-                                    :join? false})))
+(defonce server 
+  (when-not *compile-files*
+    (run-jetty #'app (if keystore
+                       {:port 8130
+                        :join? false
+                        :ssl-port 8131
+                        :keystore keystore
+                        :key-password keypass
+                        :truststore keystore
+                        :trust-password keypass
+                        :client-auth :want}
+                       {:port 8130
+                        :join? false}))))
 
 (defn -main
   "Dummy entry point"
   [& args]
-  (println "Name server running"))
+  (println "Name server running")
+  (if-let [repl-port (env :wb-nrepl-port)]
+    (nrepl/start-server :port (Integer/parseInt repl-port))))
+          
