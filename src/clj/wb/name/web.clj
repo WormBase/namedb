@@ -285,20 +285,31 @@
 
 (def keystore (env :wb-ssl-keystore ))
 (def keypass (env :wb-ssl-password))
+(def http-port (if-let [x (env :wb-http-port)]
+                 (Integer/parseInt x)
+                 8130))
+(def https-port (if-let [x (env :wb-https-port)]
+                  (Integer/parseInt x)
+                  8131))
+
+(println "HTTP port " http-port)
+(println "HTTPS port" https-port)
 
 (defonce server 
   (when-not *compile-files*
+    (do
+      (println "Running server")
     (run-jetty #'app (if keystore
-                       {:port 8130
+                       {:port http-port
                         :join? false
-                        :ssl-port 8131
+                        :ssl-port https-port
                         :keystore keystore
                         :key-password keypass
                         :truststore keystore
                         :trust-password keypass
                         :client-auth :want}
-                       {:port 8130
-                        :join? false}))))
+                       {:port http-port
+                        :join? false})))))
 
 (defn -main
   "Dummy entry point"

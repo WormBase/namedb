@@ -26,14 +26,16 @@
                     :where [?u :user/role :user.role/receive-email]
                            [?u :user/email ?e]]
                   (db con))
-        from (env :wb-email-from)]
+        from (env :wb-email-from)
+        tag (or (env :wb-email-tag)
+                "[TEST NAMESERVER] ")]
     (if (and from (seq recpts))
       (future
         (p/send-message 
          
          {:from from
           :to (seq recpts)
-          :subject (or subject "Name server")
+          :subject (str tag (or subject "Name server"))
           :body body
           }))
       (do
