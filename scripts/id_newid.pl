@@ -25,7 +25,9 @@ GetOptions('domain:s'     => \$domain,
            'nameserver:s' => \$ns)
     or die $USAGE;
 
-$ns = $ns || "https://db.wormbase.org:8131";
+die "Must specify --domain" unless $domain;
+
+$ns = $ns || "https://dev.wormbase.org:9016";
 
 my $client = HTTP::Tiny->new(
     max_redirect => 0, 
