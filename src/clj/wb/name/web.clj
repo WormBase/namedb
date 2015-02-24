@@ -205,6 +205,8 @@
         (friend/authorize #{:user.role/query}) (api-query params))
   (POST "/api/transact" {params :params}
         (friend/authorize #{:user.role/transact}) (api-transact params))
+  (GET "/api/validate-gene-name" {params :params}
+        (friend/authorize #{:user.role/query} (gene/api-validate-name params)))
 
   (GET "/test" req (str "hello " (:wbperson (friend/current-authentication)))))
 

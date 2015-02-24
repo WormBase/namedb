@@ -674,3 +674,24 @@
                   :value "yes"}]
          [:input {:type "submit"}]]]))))
 
+
+(defn api-validate-name [{:keys [type species name]}]
+  (if-let [name-err (validate-name name type species)]
+    (pr-str
+     {:type type 
+      :species species
+      :name name
+      :err name-err})
+    (if-let [existing (ffirst (lookup-gene (db con) name))]
+      (pr-str 
+       {:type type 
+        :species species
+        :name name
+        :err (format "%s already exsits as %s" name existing)})
+      (pr-str
+       {:type type
+        :species species
+        :name name
+        :okay true}))))
+          
+  
