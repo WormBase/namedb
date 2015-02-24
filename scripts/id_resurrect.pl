@@ -16,14 +16,16 @@ Options:
   --domain       Domain of identifier to resurrect (e.g. "Gene")
   --id           Identifier to resurrect.
   --cert         Path to certificate file.
+  --key          Path to key file.
   --nameserver   Base URI of the name server to contact.
 
 END
 
-my ($domain, $id, $cert, $ns);
+my ($domain, $id, $cert, $key, $ns);
 GetOptions('domain:s'     => \$domain,
            'id:s'         => \$id,
            'cert:s'       => \$cert,
+           'key:s'        => \$key,
            'nameserver:s' => \$ns)
     or die "Bad opts...";
 
@@ -33,7 +35,7 @@ my $client = HTTP::Tiny->new(
     max_redirect => 0, 
     SSL_options => {
         SSL_cert_file => $cert, 
-        SSL_key_file =>  $cert
+        SSL_key_file =>  $key
     });
 
 sub edn_post {

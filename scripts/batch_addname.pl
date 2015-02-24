@@ -17,16 +17,18 @@ Options:
   --species      What species these are for - default = elegans
   --force        Bypass CGC name validation check.
   --cert         Path to certificate file.
+  --key          Path to key file.
   --nameserver   Base URI of the name server to contact.
 
 END
 
-my ($file, $species, $type, $force, $cert, $ns);
+my ($file, $species, $type, $force, $cert, $ns, $key);
 GetOptions('file:s'       => \$file,
            'species:s'    => \$species,
            'type:s'       => \$type,
            'force'        => \$force,
            'cert:s'       => \$cert,
+           'key:s'        => \$key,
            'nameserver:s' => \$ns)
     or die "Bad opts...";
 
@@ -42,7 +44,9 @@ my $client = HTTP::Tiny->new(
     max_redirect => 0, 
     SSL_options => {
         SSL_cert_file => $cert, 
-        SSL_key_file =>  $cert
+        SSL_key_file =>  $key,
+        verify_hostname => 0,
+        SSL_verify_mode => 0
     });
 
 sub edn_post {
