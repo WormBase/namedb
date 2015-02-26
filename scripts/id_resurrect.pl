@@ -2,10 +2,11 @@
 
 use strict;
 
-use HTTP::Tiny;
 use edn;
 use Getopt::Long;
-use Data::Dumper;
+
+use lib 'lib';
+use NameDB;
 
 my $USAGE = <<END;
 Usage: $0 <options>
@@ -27,38 +28,18 @@ GetOptions('domain:s'     => \$domain,
            'cert:s'       => \$cert,
            'key:s'        => \$key,
            'nameserver:s' => \$ns)
-    or die "Bad opts...";
+    or die $USAGE;
 
-$ns = $ns || "https://dev.wormbase.org:9016";
-
-my $client = HTTP::Tiny->new(
-    max_redirect => 0, 
-    SSL_options => {
-        SSL_cert_file => $cert, 
-        SSL_key_file =>  $key
-    });
-
-sub edn_post {
-    my ($uri, $content) = @_;
-    my $resp = $client->post($uri, {
-        content => $content,
-        headers => {
-            'content-type' => 'application/edn'
-        }
-    });
-    die "Failed to connect to nameserver $resp->{'content'}" unless $resp->{'success'};
-    return edn::read($resp->{'content'});
-}
+my $namedb = NameDB->new(-cert => $cert, -key => $key);
 
 my $query = <<END;
-  {:query [:find ?id ?live
-           :in \$ ?id
-           :where [?obj :object/name ?id]
-                  [?obj :object/live ?live]]
-    :params ["$id"]}
+  [:find ?id ?live
+   :in \$ ?id
+   :where [?obj :object/name ?id]
+          [?obj :object/live ?live]]
 END
 
-my $result = edn_post("$ns/api/query", $query);
+my $result = $namedb->query($query, $id);
 my $count = scalar @{$result};
 
 die "Could not find identifier $id." unless $count > 0;
@@ -68,11 +49,9 @@ my ($cid, $live) = @{$result->[0]};
 
 die "$id is Still Alive.\n" if $live;
 
-my $txn = edn::write(
-    {transaction => [[edn::read(':wb/resurrect'), 
-                      [edn::read(':object/name'), $cid]]]
-    });
-my $txr = edn_post("$ns/api/transact", $txn);
+my $txn = [[edn::read(':wb/resurrect'), 
+            [edn::read(':object/name'), $cid]]];
+my $txr = $namedb->transact($txn);
 if ($txr->{'success'}) {
     print "$cid resurrected.\n"
 } else {

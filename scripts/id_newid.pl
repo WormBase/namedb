@@ -2,10 +2,12 @@
 
 use strict;
 
-use HTTP::Tiny;
+
 use edn;
 use Getopt::Long;
-use Data::Dumper;
+
+use lib 'lib';
+use NameDB;
 
 my $USAGE = <<END;
 Usage: $0 <options>
@@ -29,35 +31,13 @@ GetOptions('domain:s'     => \$domain,
 
 die "Must specify --domain" unless $domain;
 
-$ns = $ns || "https://dev.wormbase.org:9016";
-
-my $client = HTTP::Tiny->new(
-    max_redirect => 0, 
-    SSL_options => {
-        SSL_cert_file => $cert, 
-        SSL_key_file =>  $key
-    });
-
-sub edn_post {
-    my ($uri, $content) = @_;
-    my $resp = $client->post($uri, {
-        content => $content,
-        headers => {
-            'content-type' => 'application/edn'
-        }
-    });
-    die "Failed to connect to nameserver $resp->{'content'}" unless $resp->{'success'};
-    return edn::read($resp->{'content'});
-}
+my $namedb = NameDB->new(-cert => $cert, -key => $key);
 
 my $tempid = edn::read('#db/id [:db.part/user -1000500]');
-my $txn = edn::write(
-    {'transaction' => [[edn::read(':wb/new-obj'),
-                      $domain,
-                      [$tempid]]],
-     'tempid-report' => edn::read('true')
-    });
-my $txr = edn_post("$ns/api/transact", $txn);
+my $txn = [[edn::read(':wb/new-obj'),
+            $domain,
+            [$tempid]]];
+my $txr = $namedb->transact($txn, -tempids => 1);
 
 if ($txr->{'success'}) {
     print "Created $txr->{'tempid-report'}->[0]->[0].\n";

@@ -2,10 +2,11 @@
 
 use strict;
 
-use HTTP::Tiny;
 use edn;
 use Getopt::Long;
-use Data::Dumper;
+
+use lib 'lib';
+use NameDB;
 
 my $USAGE = <<END;
 Usage: $0 <options>
@@ -32,7 +33,6 @@ GetOptions('file:s'       => \$file,
            'nameserver:s' => \$ns)
     or die "Bad opts...";
 
-$ns = $ns || "https://dev.wormbase.org:9016";
 $species = $species || 'elegans';
 $type = $type || 'CGC';
 
@@ -40,26 +40,7 @@ if (($type ne "CGC") && ($type ne "Sequence")) {
     die "$type is not a valid type (CGC/Sequence)";
 }
 
-my $client = HTTP::Tiny->new(
-    max_redirect => 0, 
-    SSL_options => {
-        SSL_cert_file => $cert, 
-        SSL_key_file =>  $key,
-        verify_hostname => 0,
-        SSL_verify_mode => 0
-    });
-
-sub edn_post {
-    my ($uri, $content) = @_;
-    my $resp = $client->post($uri, {
-        content => $content,
-        headers => {
-            'content-type' => 'application/edn'
-        }
-    });
-    die "Failed to connect to nameserver $resp->{'content'}" unless $resp->{'success'};
-    return edn::read($resp->{'content'});
-}
+my $namedb = NameDB->new(-cert => $cert, -key => $key);
 
 open (FILE, "<$file") or die "can't open $file : $!\n";
 my $count = 0;
@@ -69,9 +50,7 @@ my $changename = edn::read(':wb/change-name');
 while (<FILE>) {
     my ($id, $name) = split;
     unless ($force) {
-        my $resp = $client->get("$ns/api/validate-gene-name?type=$type&species=$species&name=$name");
-        die "Failed to connect to nameserver $resp->{'content'}" unless $resp->{'success'};
-        my $valid = edn::read($resp->{'content'});
+        my $valid = $namedb->get("/api/validate-gene-name?type=$type&species=$species&name=$name");
         if ($valid->{'okay'}) {
             print "Validated $name for $id.\n";
         } else {
@@ -83,7 +62,7 @@ while (<FILE>) {
     push $txn, [$changename, [$objname, $id], "Gene", $type, $name];
 }
 
-my $txr = edn_post("$ns/api/transact", edn::write({'transaction' => $txn}));
+my $txr = $namedb->transact($txn);
 if ($txr->{'success'}) {
     print "Done!\n";
 } else {
